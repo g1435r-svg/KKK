@@ -465,14 +465,65 @@ function filterTools(q){
 // ─────────────────────────────────────────────
 // 1. CALCULATOR
 // ─────────────────────────────────────────────
+// Safe recursive-descent math parser (no eval / Function constructor)
+function safeMath(expr){
+  expr=expr.trim()
+    .replace(/sqrt\(/gi,'§sqrt(')
+    .replace(/sin\(/gi,'§sin(')
+    .replace(/cos\(/gi,'§cos(')
+    .replace(/tan\(/gi,'§tan(')
+    .replace(/log\(/gi,'§log(')
+    .replace(/ln\(/gi,'§ln(')
+    .replace(/abs\(/gi,'§abs(')
+    .replace(/Math\.PI/gi,'π')
+    .replace(/pi/gi,'π');
+  let pos=0;
+  function peek(){return expr[pos];}
+  function consume(){return expr[pos++];}
+  function skipWs(){while(pos<expr.length&&expr[pos]===' ')pos++;}
+  function parseExpr(){return parseAddSub();}
+  function parseAddSub(){let v=parseMulDiv();skipWs();while(pos<expr.length&&(peek()==='+')&&expr[pos-1]!=='e'||pos<expr.length&&peek()==='-'&&pos>0){const op=consume();v=op==='+'?v+parseMulDiv():v-parseMulDiv();skipWs();}return v;}
+  function parseMulDiv(){let v=parsePow();skipWs();while(pos<expr.length&&(peek()==='*'||peek()==='/'||peek()==='%')){const op=consume();const r=parsePow();if(op==='*')v*=r;else if(op==='/')v/=r;else v=v%r;skipWs();}return v;}
+  function parsePow(){let v=parseUnary();skipWs();if(peek()==='*'&&expr[pos+1]==='*'){pos+=2;v=Math.pow(v,parsePow());}return v;}
+  function parseUnary(){skipWs();if(peek()==='-'){consume();return -parseUnary();}if(peek()==='+'){consume();return parseUnary();}return parseAtom();}
+  function parseAtom(){skipWs();// functions
+    if(expr[pos]==='§'){pos++;let name='';while(pos<expr.length&&/[a-z]/.test(expr[pos]))name+=consume();skipWs();if(peek()!=='(')throw new Error('expected (');consume();const arg=parseExpr();skipWs();if(peek()!==')')throw new Error('expected )');consume();const fns={sqrt:Math.sqrt,sin:Math.sin,cos:Math.cos,tan:Math.tan,log:Math.log10,ln:Math.log,abs:Math.abs};if(!fns[name])throw new Error('unknown fn '+name);return fns[name](arg);}
+    // π
+    if(peek()==='π'){consume();return Math.PI;}
+    // parentheses
+    if(peek()==='('){consume();const v=parseExpr();skipWs();if(peek()!==')')throw new Error('expected )');consume();return v;}
+    // number
+    let num='';
+    if(peek()==='-'&&(num.length===0)){num+=consume();}
+    while(pos<expr.length&&/[\d.]/.test(peek()))num+=consume();
+    if(pos<expr.length&&(peek()==='e'||peek()==='E')){num+=consume();if(peek()==='-'||peek()==='+')num+=consume();while(pos<expr.length&&/\d/.test(peek()))num+=consume();}
+    if(!num||num==='-')throw new Error('expected number');
+    return parseFloat(num);
+  }
+  // Restart with clean add/sub parser supporting proper operator precedence
+  pos=0;
+  // Simplified correct parser:
+  function E(){return A();}
+  function A(){let v=M();skipWs();while(pos<expr.length&&(expr[pos]==='+'||(expr[pos]==='-'&&pos>0&&!/[eE]/.test(expr[pos-1])))){const op=consume();v=op==='+'?v+M():v-M();skipWs();}return v;}
+  function M(){let v=P();skipWs();while(pos<expr.length&&(expr[pos]==='*'||expr[pos]==='/'||expr[pos]==='%')&&!(expr[pos]==='*'&&expr[pos+1]==='*')){const op=consume();const r=P();v=op==='*'?v*r:op==='/'?v/r:v%r;skipWs();}return v;}
+  function P(){let v=U();skipWs();if(pos<expr.length&&expr[pos]==='*'&&expr[pos+1]==='*'){pos+=2;v=Math.pow(v,P());}return v;}
+  function U(){skipWs();if(pos<expr.length&&expr[pos]==='-'){pos++;return-U();}if(pos<expr.length&&expr[pos]==='+'){pos++;return U();}return AT();}
+  function AT(){skipWs();
+    if(pos<expr.length&&expr[pos]==='§'){pos++;let name='';while(pos<expr.length&&/[a-z]/.test(expr[pos]))name+=expr[pos++];skipWs();if(expr[pos]!=='(')throw 0;pos++;const a=E();skipWs();if(expr[pos]!==')')throw 0;pos++;const fns={sqrt:Math.sqrt,sin:Math.sin,cos:Math.cos,tan:Math.tan,log:Math.log10,ln:Math.log,abs:Math.abs};if(!fns[name])throw 0;return fns[name](a);}
+    if(pos<expr.length&&expr[pos]==='π'){pos++;return Math.PI;}
+    if(pos<expr.length&&expr[pos]==='('){pos++;const v=E();skipWs();if(expr[pos]!==')')throw 0;pos++;return v;}
+    let num='';while(pos<expr.length&&/[\d.]/.test(expr[pos]))num+=expr[pos++];
+    if(pos<expr.length&&(expr[pos]==='e'||expr[pos]==='E')){num+=expr[pos++];if(pos<expr.length&&(expr[pos]==='+'||expr[pos]==='-'))num+=expr[pos++];while(pos<expr.length&&/\d/.test(expr[pos]))num+=expr[pos++];}
+    if(!num)throw 0;return parseFloat(num);}
+  const result=E();skipWs();if(pos<expr.length)throw new Error('unexpected: '+expr[pos]);return result;
+}
 function calcLive(){
   const expr = document.getElementById('calcExpr').value;
   const el = document.getElementById('calcResult');
   if(!expr.trim()){el.textContent='תוצאה';return;}
   try{
-    // Replace sqrt( with Math.sqrt( for user convenience
-    const safe = expr.replace(/sqrt\(/g,'Math.sqrt(').replace(/sin\(/g,'Math.sin(').replace(/cos\(/g,'Math.cos(').replace(/tan\(/g,'Math.tan(').replace(/log\(/g,'Math.log10(').replace(/ln\(/g,'Math.log(').replace(/abs\(/g,'Math.abs(');
-    const result = Function('"use strict"; return ('+safe+')')();
+    // Whitelist-only safe math evaluator (no Function/eval)
+    const result = safeMath(expr);
     el.textContent = isFinite(result) ? +result.toFixed(10) : '∞';
   }catch(e){el.textContent='שגיאת חישוב';}
 }
@@ -656,12 +707,18 @@ updateColor('#38bdf8');
 // ─────────────────────────────────────────────
 function b64Encode(){
   const v=document.getElementById('b64Input').value;
-  document.getElementById('b64Output').value=btoa(unescape(encodeURIComponent(v)));
-  document.getElementById('b64Msg').textContent='';
+  try{
+    const bytes=new TextEncoder().encode(v);
+    const binStr=Array.from(bytes,b=>String.fromCharCode(b)).join('');
+    document.getElementById('b64Output').value=btoa(binStr);
+    document.getElementById('b64Msg').textContent='';
+  }catch(e){document.getElementById('b64Msg').textContent='שגיאה בקידוד';}
 }
 function b64Decode(){
   try{
-    document.getElementById('b64Output').value=decodeURIComponent(escape(atob(document.getElementById('b64Input').value)));
+    const binStr=atob(document.getElementById('b64Input').value);
+    const bytes=Uint8Array.from(binStr,c=>c.charCodeAt(0));
+    document.getElementById('b64Output').value=new TextDecoder().decode(bytes);
     document.getElementById('b64Msg').textContent='';
   }catch(e){document.getElementById('b64Msg').textContent='שגיאה: קלט Base64 לא תקין';}
 }
@@ -703,7 +760,10 @@ function renderMd(){
     .replace(/\*(.+?)\*/g,'<em>$1</em>')
     .replace(/`(.+?)`/g,'<code style="background:var(--bg);padding:0 .3em;border-radius:3px;">$1</code>')
     .replace(/^- (.+)$/gm,'<li>$1</li>')
-    .replace(/\[(.+?)\]\((.+?)\)/g,'<a href="$2" style="color:var(--accent)">$1</a>')
+    .replace(/\[(.+?)\]\((.+?)\)/g,(_, text, url)=>{
+      const safeUrl=/^(https?:\/\/|\/|#|\.)/.test(url)?url:'#';
+      return `<a href="${safeUrl}" style="color:var(--accent)">${text}</a>`;
+    })
     .replace(/^---$/gm,'<hr style="border-color:var(--border)">')
     .replace(/\n/g,'<br>');
   document.getElementById('mdPreview').innerHTML=html;
