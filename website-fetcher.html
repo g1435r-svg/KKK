@@ -138,10 +138,27 @@ let history     = JSON.parse(localStorage.getItem('wf_history')||'[]');
 /* ──────────────────────────────────────
    MAIN FETCH
 ────────────────────────────────────── */
+const BLOCKED_SCHEMES = ['chrome:','chrome-extension:','file:','about:','data:','javascript:','ftp:','blob:','moz-extension:','edge:'];
+
 async function fetchSite(){
   const raw = document.getElementById('urlInput').value.trim();
-  if(!raw){ alert('הזן כתובת URL'); return; }
-  const url = raw.startsWith('http') ? raw : 'https://'+raw;
+  if(!raw){ setStatus('err','❌ הזן כתובת URL'); return; }
+
+  // Reject internal / non-http schemes
+  const lc = raw.toLowerCase();
+  const blocked = BLOCKED_SCHEMES.find(s => lc.startsWith(s));
+  if(blocked){
+    setStatus('err', `❌ כתובות "${blocked}" הן פנימיות של הדפדפן ולא ניתן לאחזר אותן. השתמש בכתובת https://...`);
+    return;
+  }
+
+  const url = /^https?:\/\//i.test(raw) ? raw : 'https://'+raw;
+
+  // Basic URL validity check
+  try { new URL(url); } catch(_){
+    setStatus('err','❌ כתובת URL לא תקינה — ודא שהיא מתחילה ב-https://');
+    return;
+  }
 
   setStatus('loading','⏳ טוען...');
   document.getElementById('outputCard').style.display = 'none';
@@ -164,7 +181,9 @@ async function fetchSite(){
     setStatus('ok',`✅ ${json.status?.http_code||200} OK`);
     addHistory(url, true);
   } catch(e){
-    setStatus('err','❌ '+e.message);
+    let msg = e.message;
+    if(msg === 'Failed to fetch') msg = 'לא ניתן להגיע לאתר — בדוק שהכתובת נכונה ושיש חיבור אינטרנט (ייתכן שהאתר חסם את ה-proxy)';
+    setStatus('err','❌ '+msg);
     addHistory(url, false);
   }
 }
