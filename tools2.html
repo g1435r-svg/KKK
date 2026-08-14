@@ -1,0 +1,911 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>20 כלים נוספים אופליין</title>
+<style>
+  :root {
+    --bg: #0f172a; --surface: #1e293b; --card: #253047; --accent: #38bdf8;
+    --accent2: #818cf8; --text: #e2e8f0; --muted: #94a3b8; --border: #334155;
+    --success: #34d399; --danger: #f87171; --warn: #fbbf24;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; min-height: 100vh; }
+  header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 1rem 2rem; display: flex; align-items: center; gap: 1rem; position: sticky; top: 0; z-index: 100; }
+  header h1 { font-size: 1.4rem; color: var(--accent); }
+  .search-bar { flex: 1; background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: .5rem 1rem; color: var(--text); font-size: 1rem; outline: none; }
+  .search-bar:focus { border-color: var(--accent); }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 1.2rem; padding: 1.5rem 2rem; }
+  .tool-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; }
+  .tool-header { background: var(--surface); padding: .8rem 1.1rem; display: flex; align-items: center; gap: .6rem; border-bottom: 1px solid var(--border); }
+  .tool-icon { font-size: 1.3rem; }
+  .tool-title { font-weight: 600; font-size: 1rem; color: var(--accent); }
+  .tool-body { padding: 1rem; flex: 1; display: flex; flex-direction: column; gap: .7rem; }
+  input[type=text], input[type=number], input[type=date], input[type=time], textarea, select {
+    width: 100%; background: var(--surface); border: 1px solid var(--border); border-radius: 7px;
+    color: var(--text); padding: .5rem .8rem; font-size: .93rem; outline: none; resize: vertical;
+  }
+  input:focus, textarea:focus, select:focus { border-color: var(--accent); }
+  .row { display: flex; gap: .5rem; }
+  .row > * { flex: 1; }
+  button { background: var(--accent); color: #0f172a; border: none; border-radius: 7px; padding: .5rem 1rem; font-weight: 600; cursor: pointer; font-size: .9rem; transition: opacity .2s; }
+  button:hover { opacity: .85; }
+  button.sec { background: var(--surface); color: var(--text); border: 1px solid var(--border); }
+  button.danger { background: var(--danger); color: #fff; }
+  .result { background: var(--surface); border: 1px solid var(--border); border-radius: 7px; padding: .6rem .9rem; font-size: .95rem; min-height: 2.2rem; word-break: break-all; color: var(--success); }
+  .result.plain { color: var(--text); }
+  .result pre { white-space: pre-wrap; font-family: 'Courier New', monospace; font-size: .85rem; }
+  label { font-size: .85rem; color: var(--muted); }
+  .tool-card.hidden { display: none; }
+  .tag { display: inline-block; background: var(--surface); border: 1px solid var(--border); border-radius: 5px; padding: .15rem .5rem; font-size: .8rem; color: var(--muted); cursor: pointer; }
+  .tag:hover { border-color: var(--accent); color: var(--accent); }
+  .matrix-display { font-family: monospace; font-size: .88rem; background: var(--surface); border: 1px solid var(--border); border-radius: 7px; padding: .6rem; white-space: pre; overflow-x: auto; color: var(--text); min-height: 2rem; }
+  .loan-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: .4rem; }
+  @media(max-width:600px){ .grid { padding: .8rem; } header { padding: .7rem 1rem; } }
+</style>
+</head>
+<body>
+<header>
+  <span style="font-size:1.8rem">🛠️</span>
+  <h1>20 כלים נוספים אופליין</h1>
+  <input class="search-bar" id="searchBar" placeholder="חפש כלי..." oninput="filterTools(this.value)">
+</header>
+<div class="grid" id="toolsGrid">
+
+<!-- ═══════════════════════════════════════════
+     1. HEX / BINARY / DECIMAL CONVERTER
+═══════════════════════════════════════════ -->
+<div class="tool-card" data-name="hex binary decimal octal בסיס converter ממיר">
+  <div class="tool-header"><span class="tool-icon">🔢</span><span class="tool-title">ממיר בסיסים (HEX/BIN/DEC/OCT)</span></div>
+  <div class="tool-body">
+    <label>עשרוני (DEC)</label>
+    <input type="text" id="basesDec" placeholder="255" oninput="basesFromDec(this.value)">
+    <label>הקסדצימלי (HEX)</label>
+    <input type="text" id="basesHex" placeholder="FF" oninput="basesFromHex(this.value)">
+    <label>בינארי (BIN)</label>
+    <input type="text" id="basesBin" placeholder="11111111" oninput="basesFromBin(this.value)">
+    <label>שמוני (OCT)</label>
+    <input type="text" id="basesOct" placeholder="377" oninput="basesFromOct(this.value)">
+    <div id="basesMsg" style="font-size:.8rem;color:var(--danger)"></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     2. LOAN / EMI CALCULATOR
+═══════════════════════════════════════════ -->
+<div class="tool-card" data-name="הלוואה EMI משכנתא מחשבון loan mortgage">
+  <div class="tool-header"><span class="tool-icon">🏦</span><span class="tool-title">מחשבון הלוואה / משכנתא</span></div>
+  <div class="tool-body">
+    <div class="row">
+      <div><label>סכום הלוואה (₪)</label><input type="number" id="loanAmt" placeholder="500000" oninput="calcLoan()"></div>
+      <div><label>ריבית שנתית (%)</label><input type="number" id="loanRate" placeholder="4.5" step="0.01" oninput="calcLoan()"></div>
+    </div>
+    <div class="row">
+      <div><label>תקופה (שנים)</label><input type="number" id="loanYears" placeholder="20" oninput="calcLoan()"></div>
+    </div>
+    <div class="result plain" id="loanResult" style="line-height:1.7;">הזן ערכים לחישוב</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     3. ROMAN NUMERAL CONVERTER
+═══════════════════════════════════════════ -->
+<div class="tool-card" data-name="roman numerals ספרות רומיות converter">
+  <div class="tool-header"><span class="tool-icon">🏛️</span><span class="tool-title">ספרות רומיות</span></div>
+  <div class="tool-body">
+    <label>מספר (1–3999)</label>
+    <input type="number" id="romanDec" placeholder="2024" min="1" max="3999" oninput="decToRoman()">
+    <div class="result" id="romanResult">הזן מספר</div>
+    <label>ספרות רומיות → מספר</label>
+    <input type="text" id="romanStr" placeholder="MMXXIV" oninput="romanToDec()" style="text-transform:uppercase;">
+    <div class="result" id="romanDecResult">הזן ספרות רומיות</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     4. TEXT CASE CONVERTER
+═══════════════════════════════════════════ -->
+<div class="tool-card" data-name="text case upper lower camelCase snake_case ממיר טקסט">
+  <div class="tool-header"><span class="tool-icon">🔤</span><span class="tool-title">ממיר Case טקסט</span></div>
+  <div class="tool-body">
+    <textarea id="caseInput" rows="3" placeholder="הקלד טקסט..."></textarea>
+    <div style="display:flex;flex-wrap:wrap;gap:.4rem;">
+      <button onclick="doCase('upper')">UPPER</button>
+      <button onclick="doCase('lower')">lower</button>
+      <button onclick="doCase('title')">Title Case</button>
+      <button onclick="doCase('camel')">camelCase</button>
+      <button onclick="doCase('snake')">snake_case</button>
+      <button onclick="doCase('kebab')">kebab-case</button>
+      <button onclick="doCase('reverse')">esreveR</button>
+    </div>
+    <div class="row">
+      <textarea id="caseOutput" rows="3" readonly placeholder="תוצאה..."></textarea>
+    </div>
+    <button class="sec" onclick="navigator.clipboard.writeText(document.getElementById('caseOutput').value)">📋 העתק</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     5. HASH GENERATOR (MD5-like / SHA simple)
+═══════════════════════════════════════════ -->
+<div class="tool-card" data-name="hash generator checksum crc djb2">
+  <div class="tool-header"><span class="tool-icon">🔑</span><span class="tool-title">מחולל Hash (DJB2 / FNV)</span></div>
+  <div class="tool-body">
+    <textarea id="hashInput" rows="3" placeholder="הקלד טקסט לגיבוב..."></textarea>
+    <button onclick="genHash()">חשב Hash</button>
+    <div>
+      <label>DJB2 (hex)</label>
+      <div class="result" id="hashDjb2" style="cursor:pointer;" onclick="copyEl('hashDjb2')">—</div>
+    </div>
+    <div>
+      <label>FNV-1a 32bit (hex)</label>
+      <div class="result" id="hashFnv">—</div>
+    </div>
+    <div>
+      <label>אורך טקסט / bytes (UTF-8)</label>
+      <div class="result plain" id="hashLen">—</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     6. PERCENTAGE CALCULATOR
+═══════════════════════════════════════════ -->
+<div class="tool-card" data-name="percentage calculator אחוזים מחשבון">
+  <div class="tool-header"><span class="tool-icon">💯</span><span class="tool-title">מחשבון אחוזים</span></div>
+  <div class="tool-body">
+    <label>X % מ-Y</label>
+    <div class="row">
+      <input type="number" id="pctX" placeholder="X %">
+      <span style="display:flex;align-items:center;flex:0 0 auto;">% מ-</span>
+      <input type="number" id="pctY" placeholder="Y">
+    </div>
+    <div class="result" id="pctResult1">—</div>
+
+    <label>X מהווה כמה % מ-Y</label>
+    <div class="row">
+      <input type="number" id="pctA" placeholder="X">
+      <span style="display:flex;align-items:center;flex:0 0 auto;">מתוך</span>
+      <input type="number" id="pctB" placeholder="Y">
+    </div>
+    <div class="result" id="pctResult2">—</div>
+
+    <label>שינוי אחוזי: מ-X ל-Y</label>
+    <div class="row">
+      <input type="number" id="pctFrom" placeholder="מ-">
+      <input type="number" id="pctTo2" placeholder="ל-">
+    </div>
+    <div class="result" id="pctResult3">—</div>
+    <button onclick="calcPcts()">חשב</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     7. RANDOM NUMBER / DICE / COIN
+═══════════════════════════════════════════ -->
+<div class="tool-card" data-name="random number dice coin flip קוביה מטבע אקראי">
+  <div class="tool-header"><span class="tool-icon">🎲</span><span class="tool-title">מחולל אקראי</span></div>
+  <div class="tool-body">
+    <label>טווח מספרים</label>
+    <div class="row">
+      <input type="number" id="rndMin" value="1">
+      <span style="display:flex;align-items:center;flex:0 0 auto;">עד</span>
+      <input type="number" id="rndMax" value="100">
+    </div>
+    <div class="row">
+      <button onclick="rollRandom()">🎯 הגרל מספר</button>
+    </div>
+    <div class="result" id="rndResult" style="font-size:2rem;text-align:center;font-weight:700;">—</div>
+    <div class="row">
+      <button class="sec" onclick="rollDice(6)">🎲 d6</button>
+      <button class="sec" onclick="rollDice(20)">🎲 d20</button>
+      <button class="sec" onclick="flipCoin()">🪙 מטבע</button>
+    </div>
+    <div class="result plain" id="rndExtra" style="text-align:center;"></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     8. IP / SUBNET CALCULATOR
+═══════════════════════════════════════════ -->
+<div class="tool-card" data-name="ip subnet cidr network calculator רשת">
+  <div class="tool-header"><span class="tool-icon">🌐</span><span class="tool-title">מחשבון IP / Subnet</span></div>
+  <div class="tool-body">
+    <label>כתובת IP עם CIDR (לדוגמה: 192.168.1.5/24)</label>
+    <input type="text" id="ipCidr" placeholder="192.168.1.5/24" oninput="calcSubnet()">
+    <div class="result plain" id="subnetResult" style="line-height:1.8; white-space:pre; font-family:monospace; font-size:.82rem; overflow-x:auto;">הזן כתובת IP עם CIDR</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     9. ASCII TABLE
+═══════════════════════════════════════════ -->
+<div class="tool-card" data-name="ascii table characters תווים">
+  <div class="tool-header"><span class="tool-icon">🔣</span><span class="tool-title">טבלת ASCII</span></div>
+  <div class="tool-body">
+    <label>תו / מספר</label>
+    <div class="row">
+      <input type="text" id="asciiChar" placeholder="A" maxlength="1" oninput="asciiFromChar()">
+      <input type="number" id="asciiNum" placeholder="65" min="0" max="127" oninput="asciiFromNum()">
+    </div>
+    <div class="result plain" id="asciiResult">הזן תו או מספר</div>
+    <label>טבלה מהירה (32–126)</label>
+    <div id="asciiTable" style="display:flex;flex-wrap:wrap;gap:.2rem;max-height:160px;overflow-y:auto;"></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     10. PIXEL / REM / EM CONVERTER
+═══════════════════════════════════════════ -->
+<div class="tool-card" data-name="pixel rem em css units converter px ממיר css">
+  <div class="tool-header"><span class="tool-icon">🖥️</span><span class="tool-title">ממיר יחידות CSS (px/rem/em)</span></div>
+  <div class="tool-body">
+    <label>גודל בסיס root (px)</label>
+    <input type="number" id="cssBase" value="16" oninput="cssConvert()">
+    <div class="row">
+      <div><label>px</label><input type="number" id="cssPx" placeholder="16" oninput="cssFromPx()"></div>
+      <div><label>rem</label><input type="number" id="cssRem" placeholder="1" oninput="cssFromRem()"></div>
+      <div><label>em (parent px)</label><input type="number" id="cssEm" placeholder="1" oninput="cssFromEm()"></div>
+    </div>
+    <div><label>parent size (em)</label><input type="number" id="cssParent" value="16" oninput="cssFromEm()"></div>
+    <div class="result plain" id="cssResult">הזן ערך</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     11. CRON EXPRESSION EXPLAINER
+═══════════════════════════════════════════ -->
+<div class="tool-card" data-name="cron expression scheduler unix crontab">
+  <div class="tool-header"><span class="tool-icon">⏰</span><span class="tool-title">מפענח Cron Expression</span></div>
+  <div class="tool-body">
+    <label>Cron Expression (5 שדות)</label>
+    <input type="text" id="cronInput" placeholder="*/5 * * * *" oninput="explainCron()">
+    <div style="display:flex;flex-wrap:wrap;gap:.3rem;">
+      <span class="tag" onclick="setCron('* * * * *')">כל דקה</span>
+      <span class="tag" onclick="setCron('0 * * * *')">כל שעה</span>
+      <span class="tag" onclick="setCron('0 0 * * *')">כל יום</span>
+      <span class="tag" onclick="setCron('0 0 * * 1')">כל שני</span>
+      <span class="tag" onclick="setCron('0 0 1 * *')">כל 1 לחודש</span>
+      <span class="tag" onclick="setCron('*/15 * * * *')">כל 15 דק'</span>
+    </div>
+    <div class="result plain" id="cronResult" style="line-height:1.8; white-space:pre-wrap;">הזן ביטוי cron</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     12. UUID GENERATOR
+═══════════════════════════════════════════ -->
+<div class="tool-card" data-name="uuid guid generator מחולל">
+  <div class="tool-header"><span class="tool-icon">🆔</span><span class="tool-title">מחולל UUID v4</span></div>
+  <div class="tool-body">
+    <div class="row">
+      <input type="number" id="uuidCount" value="5" min="1" max="100" placeholder="כמות">
+      <button onclick="genUuids()">⚡ יצור</button>
+    </div>
+    <textarea id="uuidOutput" rows="6" readonly style="font-family:monospace;font-size:.85rem;"></textarea>
+    <button class="sec" onclick="navigator.clipboard.writeText(document.getElementById('uuidOutput').value)">📋 העתק הכל</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     13. LOREM IPSUM GENERATOR
+═══════════════════════════════════════════ -->
+<div class="tool-card" data-name="lorem ipsum placeholder text generator טקסט">
+  <div class="tool-header"><span class="tool-icon">📰</span><span class="tool-title">מחולל Lorem Ipsum</span></div>
+  <div class="tool-body">
+    <div class="row">
+      <div><label>פסקאות</label><input type="number" id="loremParas" value="2" min="1" max="20"></div>
+      <div><label>משפטים/פסקה</label><input type="number" id="loremSents" value="5" min="1" max="20"></div>
+    </div>
+    <div style="display:flex;gap:.5rem;">
+      <label><input type="checkbox" id="loremHtml"> HTML &lt;p&gt;</label>
+    </div>
+    <button onclick="genLorem()">⚡ יצור</button>
+    <textarea id="loremOutput" rows="6" readonly></textarea>
+    <button class="sec" onclick="navigator.clipboard.writeText(document.getElementById('loremOutput').value)">📋 העתק</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     14. TIMEZONE CONVERTER
+═══════════════════════════════════════════ -->
+<div class="tool-card" data-name="timezone converter זמן אזור שעה utc">
+  <div class="tool-header"><span class="tool-icon">🕐</span><span class="tool-title">ממיר אזורי זמן</span></div>
+  <div class="tool-body">
+    <label>תאריך ושעה</label>
+    <div class="row">
+      <input type="date" id="tzDate">
+      <input type="time" id="tzTime" value="12:00">
+    </div>
+    <label>מ-אזור זמן</label>
+    <select id="tzFrom"></select>
+    <label>ל-אזור זמן</label>
+    <select id="tzTo"></select>
+    <button onclick="convertTz()">המר</button>
+    <div class="result plain" id="tzResult">הזן ערכים</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     15. PRIME NUMBER CHECKER / FACTORIZER
+═══════════════════════════════════════════ -->
+<div class="tool-card" data-name="prime number checker factorizer ראשוני גורמים">
+  <div class="tool-header"><span class="tool-icon">🔍</span><span class="tool-title">בדיקת מספר ראשוני / פירוק לגורמים</span></div>
+  <div class="tool-body">
+    <input type="number" id="primeNum" placeholder="הזן מספר שלם חיובי" min="1" oninput="checkPrime()">
+    <div class="result" id="primeResult">הזן מספר</div>
+    <div class="result plain" id="primeFactors" style="font-size:.85rem;"></div>
+    <label>מספרים ראשוניים ראשונים N</label>
+    <div class="row">
+      <input type="number" id="primeN" placeholder="10" min="1" max="500">
+      <button onclick="listPrimes()">רשום</button>
+    </div>
+    <div class="result plain" id="primeList" style="font-size:.82rem;line-height:1.8;word-break:break-all;"></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     16. GCD / LCM CALCULATOR
+═══════════════════════════════════════════ -->
+<div class="tool-card" data-name="gcd lcm מחלק משותף מכפיל greatest common divisor">
+  <div class="tool-header"><span class="tool-icon">🔗</span><span class="tool-title">מחשבון מ.מ.ג ומ.מ.כ</span></div>
+  <div class="tool-body">
+    <label>הזן מספרים מופרדים בפסיק</label>
+    <input type="text" id="gcdInput" placeholder="12, 18, 24" oninput="calcGcdLcm()">
+    <div class="result plain" id="gcdResult">הזן מספרים</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     17. ASPECT RATIO CALCULATOR
+═══════════════════════════════════════════ -->
+<div class="tool-card" data-name="aspect ratio calculator יחס גובה רוחב">
+  <div class="tool-header"><span class="tool-icon">📺</span><span class="tool-title">מחשבון יחס גובה-רוחב</span></div>
+  <div class="tool-body">
+    <div class="row">
+      <div><label>רוחב (W)</label><input type="number" id="arW" placeholder="1920" oninput="calcAR()"></div>
+      <div><label>גובה (H)</label><input type="number" id="arH" placeholder="1080" oninput="calcAR()"></div>
+    </div>
+    <div class="result" id="arResult">הזן מידות</div>
+    <label>חשב ממידה אחת לפי יחס</label>
+    <div class="row">
+      <div><label>W חדש</label><input type="number" id="arNewW" placeholder="800" oninput="arFromW()"></div>
+      <div class="result plain" id="arNewH" style="display:flex;align-items:center;">→ H: —</div>
+    </div>
+    <div class="row">
+      <div><label>H חדש</label><input type="number" id="arNewH2" placeholder="450" oninput="arFromH()"></div>
+      <div class="result plain" id="arNewW2" style="display:flex;align-items:center;">→ W: —</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     18. SPEED / DISTANCE / TIME CALCULATOR
+═══════════════════════════════════════════ -->
+<div class="tool-card" data-name="speed distance time calculator מרחק מהירות זמן">
+  <div class="tool-header"><span class="tool-icon">🚀</span><span class="tool-title">מרחק / מהירות / זמן</span></div>
+  <div class="tool-body">
+    <div class="row">
+      <div><label>מרחק (ק"מ)</label><input type="number" id="sdtDist" placeholder="100" oninput="calcSdt()"></div>
+      <div><label>מהירות (קמ"ש)</label><input type="number" id="sdtSpeed" placeholder="80" oninput="calcSdt()"></div>
+    </div>
+    <div><label>זמן (שעות)</label><input type="number" id="sdtTime" placeholder="1.25" step="0.01" oninput="calcSdt()"></div>
+    <div style="font-size:.8rem;color:var(--muted)">מלא שניים מתוך שלושה — הכלי יחשב את השלישי</div>
+    <div class="result plain" id="sdtResult">הזן ערכים</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     19. CSV → TABLE VIEWER
+═══════════════════════════════════════════ -->
+<div class="tool-card" data-name="csv table viewer parser נתונים">
+  <div class="tool-header"><span class="tool-icon">📊</span><span class="tool-title">CSV → טבלה</span></div>
+  <div class="tool-body">
+    <textarea id="csvInput" rows="4" placeholder="שם,גיל,עיר&#10;דוד,30,תל אביב&#10;שרה,25,ירושלים" oninput="renderCsv()"></textarea>
+    <label>תו הפרדה</label>
+    <div class="row">
+      <select id="csvSep" onchange="renderCsv()">
+        <option value=",">, (פסיק)</option>
+        <option value=";">; (נקודה-פסיק)</option>
+        <option value="&#9;">Tab</option>
+        <option value="|">| (מאונך)</option>
+      </select>
+    </div>
+    <div id="csvTableWrap" style="overflow-x:auto; max-height:200px;"></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     20. CALORIE COUNTER (basic)
+═══════════════════════════════════════════ -->
+<div class="tool-card" data-name="calorie counter bmr tdee קלוריות דיאטה">
+  <div class="tool-header"><span class="tool-icon">🍎</span><span class="tool-title">מחשבון קלוריות יומי (BMR/TDEE)</span></div>
+  <div class="tool-body">
+    <div class="row">
+      <div><label>גיל</label><input type="number" id="calAge" placeholder="30" min="1" max="120" oninput="calcCal()"></div>
+      <div><label>משקל (ק"ג)</label><input type="number" id="calWeight" placeholder="70" oninput="calcCal()"></div>
+    </div>
+    <div class="row">
+      <div><label>גובה (ס"מ)</label><input type="number" id="calHeight" placeholder="175" oninput="calcCal()"></div>
+      <div>
+        <label>מין</label>
+        <select id="calGender" onchange="calcCal()">
+          <option value="m">זכר</option>
+          <option value="f">נקבה</option>
+        </select>
+      </div>
+    </div>
+    <label>רמת פעילות</label>
+    <select id="calActivity" onchange="calcCal()">
+      <option value="1.2">יושבני (ללא פעילות)</option>
+      <option value="1.375">קל (1-3 פעמים/שבוע)</option>
+      <option value="1.55" selected>בינוני (3-5 פעמים/שבוע)</option>
+      <option value="1.725">פעיל (6-7 פעמים/שבוע)</option>
+      <option value="1.9">מאוד פעיל (2x ביום)</option>
+    </select>
+    <div class="result plain" id="calResult" style="line-height:1.8;">הזן ערכים</div>
+  </div>
+</div>
+
+</div><!-- /grid -->
+
+<script>
+/* ────────────────────────────────────────────
+   SEARCH
+──────────────────────────────────────────── */
+function filterTools(q){
+  const t = q.toLowerCase();
+  document.querySelectorAll('.tool-card').forEach(c=>{
+    c.classList.toggle('hidden', !c.dataset.name.toLowerCase().includes(t));
+  });
+}
+
+/* ────────────────────────────────────────────
+   1. BASE CONVERTER
+──────────────────────────────────────────── */
+function setBasesFields(dec){
+  const n = parseInt(dec);
+  if(isNaN(n)||n<0){ document.getElementById('basesMsg').textContent='מספר לא תקין'; return; }
+  document.getElementById('basesMsg').textContent='';
+  document.getElementById('basesDec').value = n;
+  document.getElementById('basesHex').value = n.toString(16).toUpperCase();
+  document.getElementById('basesBin').value = n.toString(2);
+  document.getElementById('basesOct').value = n.toString(8);
+}
+function basesFromDec(v){ if(v!=='') setBasesFields(parseInt(v,10)); }
+function basesFromHex(v){ const n=parseInt(v,16); if(!isNaN(n)){ setBasesFields(n); document.getElementById('basesHex').value=v.toUpperCase(); } }
+function basesFromBin(v){ const n=parseInt(v,2); if(!isNaN(n)){ setBasesFields(n); document.getElementById('basesBin').value=v; } }
+function basesFromOct(v){ const n=parseInt(v,8); if(!isNaN(n)){ setBasesFields(n); document.getElementById('basesOct').value=v; } }
+
+/* ────────────────────────────────────────────
+   2. LOAN CALCULATOR
+──────────────────────────────────────────── */
+function calcLoan(){
+  const P=parseFloat(document.getElementById('loanAmt').value);
+  const r=parseFloat(document.getElementById('loanRate').value)/100/12;
+  const n=parseFloat(document.getElementById('loanYears').value)*12;
+  const el=document.getElementById('loanResult');
+  if(!P||!r||!n){ el.textContent='הזן ערכים לחישוב'; return; }
+  const M = P*r*Math.pow(1+r,n)/(Math.pow(1+r,n)-1);
+  const total = M*n;
+  const interest = total-P;
+  el.innerHTML=`תשלום חודשי: <b style="color:var(--accent)">₪${M.toFixed(2)}</b><br>סה"כ תשלום: ₪${total.toFixed(2)}<br>סה"כ ריבית: ₪${interest.toFixed(2)}`;
+}
+
+/* ────────────────────────────────────────────
+   3. ROMAN NUMERALS
+──────────────────────────────────────────── */
+const romanVals = [[1000,'M'],[900,'CM'],[500,'D'],[400,'CD'],[100,'C'],[90,'XC'],[50,'L'],[40,'XL'],[10,'X'],[9,'IX'],[5,'V'],[4,'IV'],[1,'I']];
+function decToRoman(){
+  let n=parseInt(document.getElementById('romanDec').value);
+  const el=document.getElementById('romanResult');
+  if(isNaN(n)||n<1||n>3999){ el.textContent='1–3999 בלבד'; return; }
+  let res='';
+  for(const [v,s] of romanVals){ while(n>=v){ res+=s; n-=v; } }
+  el.textContent=res;
+}
+function romanToDec(){
+  const s=document.getElementById('romanStr').value.toUpperCase().trim();
+  const el=document.getElementById('romanDecResult');
+  const map={I:1,V:5,X:10,L:50,C:100,D:500,M:1000};
+  let n=0;
+  for(let i=0;i<s.length;i++){
+    const cur=map[s[i]], nxt=map[s[i+1]];
+    if(!cur){ el.textContent='תו לא תקין: '+s[i]; return; }
+    n += (nxt&&nxt>cur) ? -cur : cur;
+  }
+  el.textContent=n;
+}
+
+/* ────────────────────────────────────────────
+   4. TEXT CASE CONVERTER
+──────────────────────────────────────────── */
+function doCase(type){
+  const t=document.getElementById('caseInput').value;
+  let out;
+  switch(type){
+    case 'upper': out=t.toUpperCase(); break;
+    case 'lower': out=t.toLowerCase(); break;
+    case 'title': out=t.replace(/\b\w/g,c=>c.toUpperCase()); break;
+    case 'camel': out=t.toLowerCase().replace(/[^a-z0-9]+(.)/gi,(_,c)=>c.toUpperCase()); break;
+    case 'snake': out=t.toLowerCase().replace(/\s+/g,'_'); break;
+    case 'kebab': out=t.toLowerCase().replace(/\s+/g,'-'); break;
+    case 'reverse': out=t.split('').reverse().join(''); break;
+    default: out=t;
+  }
+  document.getElementById('caseOutput').value=out;
+}
+
+/* ────────────────────────────────────────────
+   5. HASH GENERATOR
+──────────────────────────────────────────── */
+function djb2(str){
+  let h=5381;
+  for(let i=0;i<str.length;i++) h=((h*33)^str.charCodeAt(i))>>>0;
+  return h.toString(16).padStart(8,'0');
+}
+function fnv1a(str){
+  let h=2166136261;
+  for(let i=0;i<str.length;i++){
+    h^=str.charCodeAt(i);
+    h=(h*16777619)>>>0;
+  }
+  return h.toString(16).padStart(8,'0');
+}
+function genHash(){
+  const s=document.getElementById('hashInput').value;
+  document.getElementById('hashDjb2').textContent=djb2(s);
+  document.getElementById('hashFnv').textContent=fnv1a(s);
+  const bytes=new TextEncoder().encode(s).length;
+  document.getElementById('hashLen').textContent=`תווים: ${s.length} | bytes (UTF-8): ${bytes}`;
+}
+function copyEl(id){ navigator.clipboard.writeText(document.getElementById(id).textContent); }
+
+/* ────────────────────────────────────────────
+   6. PERCENTAGE CALCULATOR
+──────────────────────────────────────────── */
+function calcPcts(){
+  const xv=parseFloat(document.getElementById('pctX').value);
+  const yv=parseFloat(document.getElementById('pctY').value);
+  document.getElementById('pctResult1').textContent=(!isNaN(xv)&&!isNaN(yv)) ? `${xv}% מ-${yv} = ${(xv/100*yv).toFixed(4)}` : '—';
+
+  const av=parseFloat(document.getElementById('pctA').value);
+  const bv=parseFloat(document.getElementById('pctB').value);
+  document.getElementById('pctResult2').textContent=(!isNaN(av)&&!isNaN(bv)&&bv!==0) ? `${av} מתוך ${bv} = ${(av/bv*100).toFixed(4)}%` : '—';
+
+  const fr=parseFloat(document.getElementById('pctFrom').value);
+  const to=parseFloat(document.getElementById('pctTo2').value);
+  if(!isNaN(fr)&&!isNaN(to)&&fr!==0){
+    const chg=(to-fr)/Math.abs(fr)*100;
+    document.getElementById('pctResult3').textContent=`שינוי: ${chg>0?'+':''}${chg.toFixed(4)}%`;
+  } else { document.getElementById('pctResult3').textContent='—'; }
+}
+
+/* ────────────────────────────────────────────
+   7. RANDOM / DICE / COIN
+──────────────────────────────────────────── */
+function rollRandom(){
+  const mn=parseInt(document.getElementById('rndMin').value)||1;
+  const mx=parseInt(document.getElementById('rndMax').value)||100;
+  document.getElementById('rndResult').textContent=Math.floor(Math.random()*(mx-mn+1))+mn;
+}
+function rollDice(sides){
+  document.getElementById('rndExtra').textContent=`🎲 d${sides}: ${Math.floor(Math.random()*sides)+1}`;
+}
+function flipCoin(){
+  document.getElementById('rndExtra').textContent=Math.random()<0.5?'🪙 עץ (Heads)':'🪙 פלי (Tails)';
+}
+
+/* ────────────────────────────────────────────
+   8. SUBNET CALCULATOR
+──────────────────────────────────────────── */
+function calcSubnet(){
+  const val=document.getElementById('ipCidr').value.trim();
+  const el=document.getElementById('subnetResult');
+  const m=val.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})\/(\d{1,2})$/);
+  if(!m){ el.textContent='פורמט לא תקין — השתמש ב-IP/CIDR'; return; }
+  const [,a,b,c,d,pref]=[...m].map(Number);
+  if([a,b,c,d].some(o=>o>255)||pref>32){ el.textContent='ערכים לא תקינים'; return; }
+  const ip=(a<<24)|(b<<16)|(c<<8)|d;
+  const mask=pref===0?0:(0xFFFFFFFF<<(32-pref))>>>0;
+  const network=(ip&mask)>>>0;
+  const broadcast=(network|(~mask>>>0))>>>0;
+  const first=(network+1)>>>0;
+  const last=(broadcast-1)>>>0;
+  const hosts=pref>=31?Math.pow(2,32-pref):Math.pow(2,32-pref)-2;
+  const fmt=n=>`${(n>>>24)&255}.${(n>>>16)&255}.${(n>>>8)&255}.${n&255}`;
+  const fmtMask=n=>`${(n>>>24)&255}.${(n>>>16)&255}.${(n>>>8)&255}.${n&255}`;
+  el.textContent=
+    `IP:        ${fmt((a<<24)|(b<<16)|(c<<8)|d)}\nSubnet:    ${fmtMask(mask)}\nNetwork:   ${fmt(network)}\nBroadcast: ${fmt(broadcast)}\nFirst Host:${fmt(first)}\nLast Host: ${fmt(last)}\nHosts:     ${hosts>0?hosts:0}`;
+}
+
+/* ────────────────────────────────────────────
+   9. ASCII TABLE
+──────────────────────────────────────────── */
+function asciiFromChar(){
+  const ch=document.getElementById('asciiChar').value;
+  if(!ch) return;
+  const code=ch.charCodeAt(0);
+  document.getElementById('asciiNum').value=code;
+  showAsciiInfo(code,ch);
+}
+function asciiFromNum(){
+  const n=parseInt(document.getElementById('asciiNum').value);
+  if(isNaN(n)||n<0||n>127) return;
+  const ch=String.fromCharCode(n);
+  document.getElementById('asciiChar').value=ch;
+  showAsciiInfo(n,ch);
+}
+function showAsciiInfo(n,ch){
+  document.getElementById('asciiResult').textContent=`DEC:${n} HEX:${n.toString(16).toUpperCase().padStart(2,'0')} BIN:${n.toString(2).padStart(8,'0')} OCT:${n.toString(8)} תו:"${n>=32&&n<127?ch:'[ctrl]'}"`;
+}
+function buildAsciiTable(){
+  const wrap=document.getElementById('asciiTable');
+  for(let i=32;i<=126;i++){
+    const span=document.createElement('span');
+    span.className='tag';
+    span.title=`DEC:${i}`;
+    span.textContent=String.fromCharCode(i);
+    span.onclick=()=>{ document.getElementById('asciiNum').value=i; asciiFromNum(); };
+    wrap.appendChild(span);
+  }
+}
+buildAsciiTable();
+
+/* ────────────────────────────────────────────
+   10. CSS UNITS
+──────────────────────────────────────────── */
+function getBase(){ return parseFloat(document.getElementById('cssBase').value)||16; }
+function getParent(){ return parseFloat(document.getElementById('cssParent').value)||16; }
+function cssFromPx(){
+  const px=parseFloat(document.getElementById('cssPx').value);
+  if(isNaN(px)) return;
+  const base=getBase(), parent=getParent();
+  document.getElementById('cssRem').value=(px/base).toFixed(4);
+  document.getElementById('cssEm').value=(px/parent).toFixed(4);
+  document.getElementById('cssResult').textContent=`${px}px = ${(px/base).toFixed(4)}rem = ${(px/parent).toFixed(4)}em`;
+}
+function cssFromRem(){
+  const rem=parseFloat(document.getElementById('cssRem').value);
+  if(isNaN(rem)) return;
+  const px=rem*getBase();
+  document.getElementById('cssPx').value=px.toFixed(4);
+  document.getElementById('cssEm').value=(px/getParent()).toFixed(4);
+  document.getElementById('cssResult').textContent=`${rem}rem = ${px.toFixed(4)}px`;
+}
+function cssFromEm(){
+  const em=parseFloat(document.getElementById('cssEm').value);
+  if(isNaN(em)) return;
+  const px=em*getParent();
+  document.getElementById('cssPx').value=px.toFixed(4);
+  document.getElementById('cssRem').value=(px/getBase()).toFixed(4);
+  document.getElementById('cssResult').textContent=`${em}em = ${px.toFixed(4)}px`;
+}
+function cssConvert(){ cssFromPx(); }
+
+/* ────────────────────────────────────────────
+   11. CRON EXPLAINER
+──────────────────────────────────────────── */
+function setCron(v){ document.getElementById('cronInput').value=v; explainCron(); }
+function explainCron(){
+  const val=document.getElementById('cronInput').value.trim();
+  const el=document.getElementById('cronResult');
+  const parts=val.split(/\s+/);
+  if(parts.length!==5){ el.textContent='נדרשים בדיוק 5 שדות: דקה שעה יום-בחודש חודש יום-בשבוע'; return; }
+  const [min,hr,dom,mon,dow]=parts;
+  const fmtField=(f,unit,vals)=>{
+    if(f==='*') return `כל ${unit}`;
+    if(f.startsWith('*/')) return `כל ${f.slice(2)} ${unit}`;
+    if(f.includes('-')){ const[a,b]=f.split('-'); return `${unit} ${a}–${b}`; }
+    if(f.includes(',')) return `ב-${unit}ות: ${f}`;;
+    const idx=parseInt(f);
+    if(vals&&!isNaN(idx)) return `${unit} ${vals[idx]||f}`;
+    return `${unit} ${f}`;
+  };
+  const days=['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'];
+  const months=['','ינואר','פברואר','מרץ','אפריל','מאי','יוני','יולי','אוגוסט','ספטמבר','אוקטובר','נובמבר','דצמבר'];
+  el.textContent=
+    `דקה:         ${fmtField(min,'דקה')}\nשעה:         ${fmtField(hr,'שעה')}\nיום בחודש:   ${fmtField(dom,'יום')}\nחודש:        ${fmtField(mon,'חודש',months)}\nיום בשבוע:   ${fmtField(dow,'יום',days)}`;
+}
+
+/* ────────────────────────────────────────────
+   12. UUID GENERATOR
+──────────────────────────────────────────── */
+function uuidV4(){
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,c=>{
+    const r=Math.random()*16|0;
+    return (c==='x'?r:(r&0x3|0x8)).toString(16);
+  });
+}
+function genUuids(){
+  const n=Math.min(100,Math.max(1,parseInt(document.getElementById('uuidCount').value)||5));
+  const arr=Array.from({length:n},uuidV4);
+  document.getElementById('uuidOutput').value=arr.join('\n');
+}
+genUuids();
+
+/* ────────────────────────────────────────────
+   13. LOREM IPSUM
+──────────────────────────────────────────── */
+const _loremWords='lorem ipsum dolor sit amet consectetur adipiscing elit sed do eiusmod tempor incididunt ut labore et dolore magna aliqua enim ad minim veniam quis nostrud exercitation ullamco laboris nisi aliquip ex ea commodo consequat duis aute irure in reprehenderit voluptate velit esse cillum eu fugiat nulla pariatur excepteur sint occaecat cupidatat non proident sunt culpa qui officia deserunt mollit anim id est laborum'.split(' ');
+function loremSentence(wc){
+  const words=[];
+  for(let i=0;i<wc;i++) words.push(_loremWords[Math.floor(Math.random()*_loremWords.length)]);
+  const s=words.join(' ');
+  return s.charAt(0).toUpperCase()+s.slice(1)+'.';
+}
+function genLorem(){
+  const paras=parseInt(document.getElementById('loremParas').value)||2;
+  const sents=parseInt(document.getElementById('loremSents').value)||5;
+  const html=document.getElementById('loremHtml').checked;
+  const result=Array.from({length:paras},()=>{
+    const para=Array.from({length:sents},()=>loremSentence(8+Math.floor(Math.random()*8))).join(' ');
+    return html?`<p>${para}</p>`:para;
+  }).join('\n\n');
+  document.getElementById('loremOutput').value=result;
+}
+genLorem();
+
+/* ────────────────────────────────────────────
+   14. TIMEZONE CONVERTER
+──────────────────────────────────────────── */
+const tzList=['UTC','Asia/Jerusalem','America/New_York','America/Los_Angeles','America/Chicago','Europe/London','Europe/Paris','Europe/Berlin','Asia/Tokyo','Asia/Shanghai','Asia/Dubai','Asia/Kolkata','Australia/Sydney','Pacific/Auckland','America/Sao_Paulo','Africa/Cairo','America/Toronto','Europe/Moscow'];
+function buildTzSelects(){
+  ['tzFrom','tzTo'].forEach(id=>{
+    const sel=document.getElementById(id);
+    tzList.forEach(tz=>{
+      const opt=document.createElement('option');
+      opt.value=tz; opt.textContent=tz.replace('_',' ');
+      if(tz==='UTC') opt.selected=(id==='tzFrom');
+      if(tz==='Asia/Jerusalem') opt.selected=(id==='tzTo');
+      sel.appendChild(opt);
+    });
+  });
+}
+buildTzSelects();
+function convertTz(){
+  const d=document.getElementById('tzDate').value;
+  const t=document.getElementById('tzTime').value||'00:00';
+  const from=document.getElementById('tzFrom').value;
+  const to=document.getElementById('tzTo').value;
+  const el=document.getElementById('tzResult');
+  if(!d){ el.textContent='הזן תאריך'; return; }
+  try{
+    const src=new Date(`${d}T${t}`);
+    const srcStr=src.toLocaleString('he-IL',{timeZone:from});
+    const dstStr=src.toLocaleString('he-IL',{timeZone:to});
+    el.textContent=`מ-${from}: ${srcStr}\nל-${to}: ${dstStr}`;
+  } catch(e){ el.textContent='שגיאה: '+e.message; }
+}
+
+/* ────────────────────────────────────────────
+   15. PRIME CHECKER
+──────────────────────────────────────────── */
+function isPrime(n){
+  if(n<2) return false;
+  if(n<4) return true;
+  if(n%2===0||n%3===0) return false;
+  for(let i=5;i*i<=n;i+=6) if(n%i===0||n%(i+2)===0) return false;
+  return true;
+}
+function factorize(n){
+  if(n<=1) return [];
+  const factors=[];
+  for(let f=2;f*f<=n;f++) while(n%f===0){ factors.push(f); n/=f; }
+  if(n>1) factors.push(n);
+  return factors;
+}
+function checkPrime(){
+  const n=parseInt(document.getElementById('primeNum').value);
+  const elR=document.getElementById('primeResult');
+  const elF=document.getElementById('primeFactors');
+  if(isNaN(n)||n<1){ elR.textContent='הזן מספר שלם חיובי'; elF.textContent=''; return; }
+  elR.textContent=isPrime(n)?`✅ ${n} הוא מספר ראשוני`:`❌ ${n} אינו ראשוני`;
+  const f=factorize(n);
+  elF.textContent=f.length?`פירוק: ${f.join(' × ')}`:'';
+
+}
+function listPrimes(){
+  const n=parseInt(document.getElementById('primeN').value)||10;
+  const primes=[];
+  let num=2;
+  while(primes.length<Math.min(n,500)){ if(isPrime(num)) primes.push(num); num++; }
+  document.getElementById('primeList').textContent=primes.join(', ');
+}
+
+/* ────────────────────────────────────────────
+   16. GCD / LCM
+──────────────────────────────────────────── */
+function gcd(a,b){ return b===0?a:gcd(b,a%b); }
+function lcm(a,b){ return Math.abs(a*b)/gcd(a,b); }
+function calcGcdLcm(){
+  const nums=document.getElementById('gcdInput').value.split(',').map(s=>parseInt(s.trim())).filter(n=>!isNaN(n)&&n>0);
+  const el=document.getElementById('gcdResult');
+  if(nums.length<2){ el.textContent='הזן לפחות 2 מספרים'; return; }
+  const g=nums.reduce(gcd);
+  const l=nums.reduce(lcm);
+  el.textContent=`מ.מ.ג (GCD): ${g}\nמ.מ.כ (LCM): ${l}`;
+}
+
+/* ────────────────────────────────────────────
+   17. ASPECT RATIO
+──────────────────────────────────────────── */
+let _arRatio=null;
+function calcAR(){
+  const w=parseFloat(document.getElementById('arW').value);
+  const h=parseFloat(document.getElementById('arH').value);
+  const el=document.getElementById('arResult');
+  if(!w||!h){ el.textContent='הזן מידות'; _arRatio=null; return; }
+  _arRatio=w/h;
+  const g=gcd(Math.round(w),Math.round(h));
+  el.textContent=`יחס: ${(w/g).toFixed(0)}:${(h/g).toFixed(0)} (${_arRatio.toFixed(4)})`;
+}
+function arFromW(){
+  const nw=parseFloat(document.getElementById('arNewW').value);
+  if(!_arRatio||isNaN(nw)) return;
+  document.getElementById('arNewH').textContent=`→ H: ${(nw/_arRatio).toFixed(2)}`;
+}
+function arFromH(){
+  const nh=parseFloat(document.getElementById('arNewH2').value);
+  if(!_arRatio||isNaN(nh)) return;
+  document.getElementById('arNewW2').textContent=`→ W: ${(nh*_arRatio).toFixed(2)}`;
+}
+
+/* ────────────────────────────────────────────
+   18. SPEED / DISTANCE / TIME
+──────────────────────────────────────────── */
+function calcSdt(){
+  const D=parseFloat(document.getElementById('sdtDist').value);
+  const S=parseFloat(document.getElementById('sdtSpeed').value);
+  const T=parseFloat(document.getElementById('sdtTime').value);
+  const el=document.getElementById('sdtResult');
+  const has={D:!isNaN(D)&&D>0, S:!isNaN(S)&&S>0, T:!isNaN(T)&&T>0};
+  const count=Object.values(has).filter(Boolean).length;
+  if(count<2){ el.textContent='מלא לפחות שני שדות'; return; }
+  let dist=D,speed=S,time=T;
+  if(!has.T) time=dist/speed;
+  else if(!has.S) speed=dist/time;
+  else if(!has.D) dist=speed*time;
+  const hh=Math.floor(time), mm=Math.round((time-hh)*60);
+  el.textContent=`מרחק: ${dist.toFixed(2)} ק"מ | מהירות: ${speed.toFixed(2)} קמ"ש | זמן: ${hh}:${String(mm).padStart(2,'0')} (${time.toFixed(3)} ש')`;
+}
+
+/* ────────────────────────────────────────────
+   19. CSV TABLE
+──────────────────────────────────────────── */
+function renderCsv(){
+  const raw=document.getElementById('csvInput').value;
+  const sep=document.getElementById('csvSep').value;
+  const wrap=document.getElementById('csvTableWrap');
+  if(!raw.trim()){ wrap.innerHTML=''; return; }
+  const rows=raw.trim().split('\n').map(r=>r.split(sep));
+  let html='<table style="border-collapse:collapse;font-size:.82rem;min-width:100%">';
+  rows.forEach((row,ri)=>{
+    html+=`<tr>${row.map(c=>`<${ri===0?'th':'td'} style="border:1px solid var(--border);padding:.3rem .5rem;background:${ri===0?'var(--surface)':'var(--card)'};white-space:nowrap;">${c.trim()}</${ri===0?'th':'td'}>`).join('')}</tr>`;
+  });
+  html+='</table>';
+  wrap.innerHTML=html;
+}
+
+/* ────────────────────────────────────────────
+   20. CALORIE / BMR / TDEE
+──────────────────────────────────────────── */
+function calcCal(){
+  const age=parseFloat(document.getElementById('calAge').value);
+  const w=parseFloat(document.getElementById('calWeight').value);
+  const h=parseFloat(document.getElementById('calHeight').value);
+  const g=document.getElementById('calGender').value;
+  const act=parseFloat(document.getElementById('calActivity').value);
+  const el=document.getElementById('calResult');
+  if(isNaN(age)||isNaN(w)||isNaN(h)){ el.textContent='הזן ערכים'; return; }
+  // Mifflin-St Jeor
+  const bmr = g==='m'
+    ? 10*w + 6.25*h - 5*age + 5
+    : 10*w + 6.25*h - 5*age - 161;
+  const tdee=bmr*act;
+  el.innerHTML=`BMR (מנוחה): <b style="color:var(--accent)">${bmr.toFixed(0)}</b> קל'/יום<br>TDEE (פעיל): <b style="color:var(--warn)">${tdee.toFixed(0)}</b> קל'/יום<br>ירידה (-500): ${(tdee-500).toFixed(0)} קל'<br>עלייה (+500): ${(tdee+500).toFixed(0)} קל'`;
+}
+</script>
+</body>
+</html>
