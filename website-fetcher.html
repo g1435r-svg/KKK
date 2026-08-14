@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>בודק אתרים – מציג טקסט</title>
+<style>
+  :root {
+    --bg: #0f172a; --surface: #1e293b; --card: #253047;
+    --accent: #38bdf8; --text: #e2e8f0; --muted: #94a3b8;
+    --border: #334155; --success: #34d399; --danger: #f87171; --warn: #fbbf24;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; min-height: 100vh; padding: 1.5rem 2rem; }
+  h1 { color: var(--accent); font-size: 1.5rem; margin-bottom: .3rem; }
+  .subtitle { color: var(--muted); font-size: .9rem; margin-bottom: 1.2rem; }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 1.2rem; margin-bottom: 1rem; }
+  .row { display: flex; gap: .6rem; align-items: center; }
+  .row > input { flex: 1; }
+  input[type=text], textarea, select {
+    width: 100%; background: var(--surface); border: 1px solid var(--border); border-radius: 7px;
+    color: var(--text); padding: .55rem .9rem; font-size: .95rem; outline: none;
+  }
+  input:focus, textarea:focus { border-color: var(--accent); }
+  button { background: var(--accent); color: #0f172a; border: none; border-radius: 7px; padding: .55rem 1.2rem; font-weight: 700; cursor: pointer; font-size: .95rem; white-space: nowrap; }
+  button:hover { opacity: .85; }
+  button.sec { background: var(--surface); color: var(--text); border: 1px solid var(--border); }
+  button.danger { background: var(--danger); color: #fff; }
+  label { font-size: .83rem; color: var(--muted); display: block; margin-bottom: .25rem; }
+  .status { font-size: .85rem; padding: .35rem .7rem; border-radius: 6px; display: inline-flex; align-items: center; gap: .4rem; }
+  .status.ok  { background: rgba(52,211,153,.15); color: var(--success); }
+  .status.err { background: rgba(248,113,113,.15); color: var(--danger); }
+  .status.loading { background: rgba(56,189,248,.12); color: var(--accent); }
+  #textOutput {
+    min-height: 300px; max-height: 60vh; overflow-y: auto;
+    white-space: pre-wrap; font-size: .88rem; line-height: 1.7;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 7px; padding: .8rem 1rem; color: var(--text);
+    font-family: 'Segoe UI', sans-serif; resize: vertical;
+  }
+  #htmlOutput {
+    min-height: 200px; max-height: 40vh; overflow-y: auto;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 7px; padding: .8rem; font-size: .8rem;
+    font-family: 'Courier New', monospace; color: #94a3b8;
+    white-space: pre-wrap; word-break: break-all; resize: vertical;
+    display: none;
+  }
+  .tabs { display: flex; gap: .4rem; margin-bottom: .7rem; }
+  .tab { padding: .35rem .9rem; border-radius: 6px; cursor: pointer; font-size: .88rem; font-weight: 600; background: var(--surface); color: var(--muted); border: 1px solid var(--border); }
+  .tab.active { background: var(--accent); color: #0f172a; border-color: var(--accent); }
+  .meta-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px,1fr)); gap: .5rem; }
+  .meta-item { background: var(--surface); border: 1px solid var(--border); border-radius: 7px; padding: .5rem .8rem; }
+  .meta-item .mk { font-size: .75rem; color: var(--muted); }
+  .meta-item .mv { font-size: .88rem; color: var(--text); word-break: break-all; }
+  .history-list { list-style: none; display: flex; flex-direction: column; gap: .3rem; max-height: 140px; overflow-y: auto; }
+  .history-list li { display: flex; align-items: center; gap: .5rem; font-size: .83rem; background: var(--surface); border-radius: 6px; padding: .3rem .7rem; cursor: pointer; }
+  .history-list li:hover { border: 1px solid var(--accent); color: var(--accent); }
+  .badge { font-size: .72rem; padding: .1rem .4rem; border-radius: 4px; font-weight: 700; }
+  .badge.ok  { background: rgba(52,211,153,.2); color: var(--success); }
+  .badge.err { background: rgba(248,113,113,.2); color: var(--danger); }
+  .note { font-size: .78rem; color: var(--warn); background: rgba(251,191,36,.08); border: 1px solid rgba(251,191,36,.25); border-radius: 6px; padding: .4rem .8rem; }
+  @media(max-width:600px){ body { padding: .8rem; } }
+</style>
+</head>
+<body>
+
+<h1>🌐 בודק אתרים – מציג טקסט</h1>
+<p class="subtitle">הזן כתובת URL — הכלי יביא את תוכן האתר ויציג את הטקסט הנקי</p>
+
+<div class="note">
+  ⚠️ דפדפנים חוסמים בקשות cross-origin (CORS). הכלי משתמש בשירות proxy ציבורי חינמי (<b>allorigins.win</b>).<br>
+  לא מתאים לאתרים פרטיים / אינטראנט. לא נשמר שום מידע.
+</div>
+
+<!-- URL INPUT -->
+<div class="card" style="margin-top:1rem;">
+  <label>כתובת אתר (URL)</label>
+  <div class="row">
+    <input type="text" id="urlInput" placeholder="https://example.com" onkeydown="if(event.key==='Enter')fetchSite()">
+    <button onclick="fetchSite()">📥 הבא</button>
+    <button class="sec" onclick="clearAll()">🗑</button>
+  </div>
+  <div style="margin-top:.6rem; display:flex; gap:.5rem; flex-wrap:wrap;">
+    <span id="statusBadge"></span>
+    <span id="timeBadge" style="font-size:.83rem;color:var(--muted);display:flex;align-items:center;"></span>
+  </div>
+</div>
+
+<!-- META -->
+<div class="card" id="metaCard" style="display:none;">
+  <label style="margin-bottom:.5rem;">📋 מידע על הדף</label>
+  <div class="meta-grid" id="metaGrid"></div>
+</div>
+
+<!-- TABS + OUTPUT -->
+<div class="card" id="outputCard" style="display:none;">
+  <div class="tabs">
+    <div class="tab active" id="tabText" onclick="switchTab('text')">📄 טקסט נקי</div>
+    <div class="tab" id="tabHtml" onclick="switchTab('html')">🗒 HTML גולמי</div>
+  </div>
+  <div style="display:flex;gap:.5rem;margin-bottom:.5rem;flex-wrap:wrap;">
+    <button class="sec" onclick="copyOutput()">📋 העתק</button>
+    <button class="sec" onclick="downloadOutput()">⬇️ הורד TXT</button>
+    <button class="sec" onclick="searchInText()">🔍 חיפוש בטקסט</button>
+  </div>
+  <div id="searchRow" style="display:none;margin-bottom:.5rem;">
+    <input type="text" id="searchInput" placeholder="חפש מילה..." oninput="doSearch()">
+    <div id="searchCount" style="font-size:.8rem;color:var(--muted);margin-top:.3rem;"></div>
+  </div>
+  <div id="textOutput"></div>
+  <pre id="htmlOutput"></pre>
+  <div id="wordStats" style="font-size:.8rem;color:var(--muted);margin-top:.4rem;"></div>
+</div>
+
+<!-- LINKS -->
+<div class="card" id="linksCard" style="display:none;">
+  <label>🔗 קישורים שנמצאו (<span id="linksCount">0</span>)</label>
+  <div id="linksList" style="display:flex;flex-wrap:wrap;gap:.35rem;max-height:160px;overflow-y:auto;margin-top:.4rem;"></div>
+</div>
+
+<!-- HISTORY -->
+<div class="card" id="historyCard" style="display:none;">
+  <label>⏱ היסטוריה</label>
+  <ul class="history-list" id="historyList"></ul>
+  <button class="danger" style="margin-top:.5rem;font-size:.8rem;padding:.3rem .7rem;" onclick="clearHistory()">נקה היסטוריה</button>
+</div>
+
+<script>
+/* ──────────────────────────────────────
+   STATE
+────────────────────────────────────── */
+let currentText = '';
+let currentHtml = '';
+let currentTab  = 'text';
+let history     = JSON.parse(localStorage.getItem('wf_history')||'[]');
+
+/* ──────────────────────────────────────
+   MAIN FETCH
+────────────────────────────────────── */
+const BLOCKED_SCHEMES = ['chrome:','chrome-extension:','file:','about:','data:','javascript:','ftp:','blob:','moz-extension:','edge:'];
+
+async function fetchSite(){
+  const raw = document.getElementById('urlInput').value.trim();
+  if(!raw){ setStatus('err','❌ הזן כתובת URL'); return; }
+
+  // Reject internal / non-http schemes
+  const lc = raw.toLowerCase();
+  const blocked = BLOCKED_SCHEMES.find(s => lc.startsWith(s));
+  if(blocked){
+    setStatus('err', `❌ כתובות "${blocked}" הן פנימיות של הדפדפן ולא ניתן לאחזר אותן. השתמש בכתובת https://...`);
+    return;
+  }
+
+  const url = /^https?:\/\//i.test(raw) ? raw : 'https://'+raw;
+
+  // Basic URL validity check
+  try { new URL(url); } catch(_){
+    setStatus('err','❌ כתובת URL לא תקינה — ודא שהיא מתחילה ב-https://');
+    return;
+  }
+
+  setStatus('loading','⏳ טוען...');
+  document.getElementById('outputCard').style.display = 'none';
+  document.getElementById('metaCard').style.display   = 'none';
+  document.getElementById('linksCard').style.display  = 'none';
+
+  const t0 = Date.now();
+  try {
+    const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
+    const res = await fetch(proxyUrl);
+    if(!res.ok) throw new Error(`HTTP ${res.status}`);
+    const json = await res.json();
+    const elapsed = ((Date.now()-t0)/1000).toFixed(2);
+    document.getElementById('timeBadge').textContent = `⚡ ${elapsed}s`;
+
+    if(!json.contents) throw new Error('לא התקבל תוכן מהשרת');
+
+    currentHtml = json.contents;
+    processHtml(currentHtml, url, json.status);
+    setStatus('ok',`✅ ${json.status?.http_code||200} OK`);
+    addHistory(url, true);
+  } catch(e){
+    let msg = e.message;
+    if(msg === 'Failed to fetch') msg = 'לא ניתן להגיע לאתר — בדוק שהכתובת נכונה ושיש חיבור אינטרנט (ייתכן שהאתר חסם את ה-proxy)';
+    setStatus('err','❌ '+msg);
+    addHistory(url, false);
+  }
+}
+
+/* ──────────────────────────────────────
+   PROCESS HTML → TEXT
+────────────────────────────────────── */
+function processHtml(html, url, statusInfo){
+  const parser = new DOMParser();
+  const doc    = parser.parseFromString(html, 'text/html');
+
+  // Remove noise
+  ['script','style','noscript','iframe','svg','nav','footer','header','aside'].forEach(tag=>{
+    doc.querySelectorAll(tag).forEach(el=>el.remove());
+  });
+
+  // Extract text
+  currentText = (doc.body ? doc.body.innerText : doc.documentElement.innerText || '')
+    .replace(/\n{3,}/g,'\n\n').trim();
+
+  // Meta
+  const title       = doc.title || '—';
+  const desc        = doc.querySelector('meta[name="description"]')?.content || '—';
+  const keywords    = doc.querySelector('meta[name="keywords"]')?.content || '—';
+  const lang        = doc.documentElement.lang || '—';
+  const canonical   = doc.querySelector('link[rel="canonical"]')?.href || '—';
+  const ogImage     = doc.querySelector('meta[property="og:image"]')?.content || '—';
+  const charset     = doc.characterSet || '—';
+  const h1s         = [...doc.querySelectorAll('h1')].map(h=>h.textContent.trim()).filter(Boolean);
+
+  showMeta({ title, desc, keywords, lang, canonical, charset,
+    'H1': h1s.join(' | ')||'—',
+    'HTTP': statusInfo?.http_code||'—',
+    'Content-Type': statusInfo?.content_type||'—'
+  });
+
+  // Links
+  const links=[...doc.querySelectorAll('a[href]')]
+    .map(a=>{ try{ return new URL(a.href, url).href; }catch(_){ return null; } })
+    .filter(Boolean).filter((v,i,arr)=>arr.indexOf(v)===i);
+  showLinks(links);
+
+  // Output
+  showOutputCard(title);
+  renderTab();
+}
+
+/* ──────────────────────────────────────
+   UI HELPERS
+────────────────────────────────────── */
+function setStatus(type, msg){
+  const el = document.getElementById('statusBadge');
+  el.className = `status ${type}`;
+  el.textContent = msg;
+}
+
+function showMeta(data){
+  const card = document.getElementById('metaCard');
+  const grid = document.getElementById('metaGrid');
+  grid.innerHTML = Object.entries(data).map(([k,v])=>`
+    <div class="meta-item"><div class="mk">${k}</div><div class="mv">${escHtml(v)}</div></div>`).join('');
+  card.style.display = 'block';
+}
+
+function showLinks(links){
+  const card  = document.getElementById('linksCard');
+  const list  = document.getElementById('linksList');
+  const count = document.getElementById('linksCount');
+  count.textContent = links.length;
+  list.innerHTML = links.slice(0,200).map(l=>
+    `<a href="${escHtml(l)}" target="_blank" style="font-size:.75rem;color:var(--accent);background:var(--surface);border:1px solid var(--border);border-radius:5px;padding:.15rem .5rem;text-decoration:none;word-break:break-all;">${escHtml(l)}</a>`
+  ).join('');
+  card.style.display = 'block';
+}
+
+function showOutputCard(title){
+  const card = document.getElementById('outputCard');
+  card.style.display = 'block';
+  const words = currentText.trim().split(/\s+/).filter(Boolean).length;
+  const chars = currentText.length;
+  const lines = currentText.split('\n').length;
+  document.getElementById('wordStats').textContent =
+    `מילים: ${words} | תווים: ${chars} | שורות: ${lines}`;
+}
+
+function renderTab(){
+  const textEl = document.getElementById('textOutput');
+  const htmlEl = document.getElementById('htmlOutput');
+  if(currentTab==='text'){
+    textEl.style.display='block';
+    htmlEl.style.display='none';
+    textEl.textContent = currentText || '(לא נמצא טקסט)';
+  } else {
+    textEl.style.display='none';
+    htmlEl.style.display='block';
+    htmlEl.textContent = currentHtml;
+  }
+}
+
+function switchTab(tab){
+  currentTab = tab;
+  document.getElementById('tabText').classList.toggle('active', tab==='text');
+  document.getElementById('tabHtml').classList.toggle('active', tab==='html');
+  renderTab();
+}
+
+function copyOutput(){
+  navigator.clipboard.writeText(currentTab==='text' ? currentText : currentHtml)
+    .then(()=>alert('הועתק!'));
+}
+
+function downloadOutput(){
+  const content = currentTab==='text' ? currentText : currentHtml;
+  const ext     = currentTab==='text' ? 'txt' : 'html';
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([content],{type:'text/plain;charset=utf-8'}));
+  a.download = `content.${ext}`;
+  a.click();
+}
+
+function searchInText(){
+  const row = document.getElementById('searchRow');
+  row.style.display = row.style.display==='none' ? 'block' : 'none';
+}
+
+function doSearch(){
+  const q = document.getElementById('searchInput').value.toLowerCase();
+  const el = document.getElementById('textOutput');
+  const cnt = document.getElementById('searchCount');
+  if(!q){ el.textContent=currentText; cnt.textContent=''; return; }
+  const matches = (currentText.toLowerCase().match(new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'g'))||[]).length;
+  cnt.textContent = `נמצאו ${matches} תוצאות`;
+  const escaped = escHtml(currentText);
+  const highlighted = escaped.replace(
+    new RegExp(escHtml(q).replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'gi'),
+    m=>`<mark style="background:var(--warn);color:#0f172a;border-radius:3px;">${m}</mark>`
+  );
+  el.innerHTML = highlighted;
+}
+
+function clearAll(){
+  currentText=''; currentHtml='';
+  document.getElementById('urlInput').value='';
+  document.getElementById('statusBadge').textContent='';
+  document.getElementById('timeBadge').textContent='';
+  document.getElementById('outputCard').style.display='none';
+  document.getElementById('metaCard').style.display='none';
+  document.getElementById('linksCard').style.display='none';
+  document.getElementById('searchRow').style.display='none';
+}
+
+function escHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+/* ──────────────────────────────────────
+   HISTORY
+────────────────────────────────────── */
+function addHistory(url, ok){
+  history.unshift({url, ok, ts: new Date().toLocaleString('he-IL')});
+  if(history.length>30) history.pop();
+  localStorage.setItem('wf_history', JSON.stringify(history));
+  renderHistory();
+}
+
+function renderHistory(){
+  if(!history.length){ document.getElementById('historyCard').style.display='none'; return; }
+  document.getElementById('historyCard').style.display='block';
+  document.getElementById('historyList').innerHTML = history.map(h=>`
+    <li onclick="loadFromHistory('${escHtml(h.url)}')">
+      <span class="badge ${h.ok?'ok':'err'}">${h.ok?'✓':'✗'}</span>
+      <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escHtml(h.url)}</span>
+      <span style="font-size:.75rem;color:var(--muted);">${h.ts}</span>
+    </li>`).join('');
+}
+
+function loadFromHistory(url){
+  document.getElementById('urlInput').value = url;
+  fetchSite();
+}
+
+function clearHistory(){
+  history=[];
+  localStorage.removeItem('wf_history');
+  renderHistory();
+}
+
+renderHistory();
+</script>
+</body>
+</html>
